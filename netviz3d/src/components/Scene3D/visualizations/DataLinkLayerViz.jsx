@@ -1,6 +1,8 @@
 import React from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
+import FramingConceptViz from './FramingConceptViz'
+import ErrorTypeConceptViz from './ErrorTypeConceptViz'
 
 /**
  * Data Link Layer Visualization - Per-Concept Models
@@ -43,39 +45,7 @@ function MACAddressViz() {
 
 // Framing Visualization
 function FramingViz() {
-  const groupRef = useRef()
-  useFrame(() => {
-    if (groupRef.current) groupRef.current.rotation.y += 0.003
-  })
-  return (
-    <group ref={groupRef}>
-      {/* Frame with header, payload, trailer */}
-      <group>
-        {/* Header */}
-        <mesh position={[-2, 0, 0]}>
-          <boxGeometry args={[0.8, 2.5, 0.8]} />
-          <meshStandardMaterial color="#fca5a5" emissive="#ef4444" emissiveIntensity={0.7} />
-        </mesh>
-        {/* Payload (data) */}
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[2.5, 2.5, 2.5]} />
-          <meshStandardMaterial color="#dc2626" emissive="#991b1b" emissiveIntensity={0.6} />
-        </mesh>
-        {/* Trailer/CRC */}
-        <mesh position={[2, 0, 0]}>
-          <boxGeometry args={[0.8, 2.5, 0.8]} />
-          <meshStandardMaterial color="#fca5a5" emissive="#ef4444" emissiveIntensity={0.7} />
-        </mesh>
-      </group>
-      {/* Frame boundary line */}
-      <line>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={2} array={new Float32Array([-2.5, -1.5, 0, 2.5, -1.5, 0])} itemSize={3} />
-        </bufferGeometry>
-        <lineBasicMaterial color="#ef4444" linewidth={2} />
-      </line>
-    </group>
-  )
+  return <FramingConceptViz />
 }
 
 // ARP Visualization (Address Resolution Protocol)
@@ -152,34 +122,7 @@ function ResponseIndicator({ timeRef }) {
 
 // Error Checking Visualization
 function ErrorCheckingViz() {
-  const groupRef = useRef()
-  useFrame(() => {
-    if (groupRef.current) groupRef.current.rotation.z += 0.004
-  })
-  return (
-    <group ref={groupRef}>
-      {/* Frame with errors */}
-      <mesh position={[-4, 0, 0]}>
-        <boxGeometry args={[1.5, 2, 1.5]} />
-        <meshStandardMaterial color="#ef4444" emissive="#dc2626" emissiveIntensity={0.7} />
-      </mesh>
-      {/* CRC/Checksum calculator */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <meshStandardMaterial color="#fbbf24" emissive="#f59e0b" emissiveIntensity={0.8} />
-      </mesh>
-      {/* Validation result - good frame */}
-      <mesh position={[4, 1.5, 0]}>
-        <boxGeometry args={[1.5, 2, 1.5]} />
-        <meshStandardMaterial color="#10b981" emissive="#059669" emissiveIntensity={0.7} />
-      </mesh>
-      {/* Validation result - bad frame (discarded) */}
-      <mesh position={[4, -1.5, 0]} scale={0.7}>
-        <boxGeometry args={[1.5, 2, 1.5]} />
-        <meshStandardMaterial color="#6b7280" emissive="#374151" emissiveIntensity={0.4} transparent opacity={0.5} />
-      </mesh>
-    </group>
-  )
+  return <ErrorTypeConceptViz />
 }
 
 export default function DataLinkLayerViz({ conceptId = 'dl-mac-addr' }) {

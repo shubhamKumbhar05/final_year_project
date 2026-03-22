@@ -332,30 +332,15 @@ function PacketDropViz() {
   )
 }
 
-export default function NetworkLayerViz({ conceptId = 'net-ip-addr', ipFragIsAttempting = false, ipFragDFEnabled = false, ipFragOutOfOrder = false, ipFragShowICMPError = false, isFragmentationAttempting = false, isDFEnabled = false, isFragmentationOutOfOrder = false, showICMPError = false }) {
-  const fragAttempting = ipFragIsAttempting || isFragmentationAttempting
-  const fragDFEnabled = ipFragDFEnabled || isDFEnabled
-  const fragOutOfOrder = ipFragOutOfOrder || isFragmentationOutOfOrder
-  const fragShowICMPError = ipFragShowICMPError || showICMPError
+export default function NetworkLayerViz({ conceptId = 'net-ipv4-header', ipFragIsAttempting = false, ipFragDFEnabled = false, ipFragOutOfOrder = false, ipFragShowICMPError = false, isFragmentationAttempting = false, isDFEnabled = false, isFragmentationOutOfOrder = false, showICMPError = false }) {
+  const _fragAttempting = ipFragIsAttempting || isFragmentationAttempting
+  const _fragDFEnabled = ipFragDFEnabled || isDFEnabled
+  const _fragOutOfOrder = ipFragOutOfOrder || isFragmentationOutOfOrder
+  const _fragShowICMPError = ipFragShowICMPError || showICMPError
 
   switch (conceptId) {
     case 'net-ipv4-header':
       return <IPv4HeaderStage />
-    case 'net-ip-fragmentation':
-      return (
-        <IPFragmentationStage
-          isAttempting={fragAttempting}
-          isDFEnabled={fragDFEnabled}
-          isOutOfOrder={fragOutOfOrder}
-          showICMPError={fragShowICMPError}
-        />
-      )
-    case 'net-ip-addr':
-      return <IPAddressingViz />
-    case 'net-fragmentation':
-      return <IPFragmentationStage isAttempting={fragAttempting} isDFEnabled={fragDFEnabled} isOutOfOrder={fragOutOfOrder} showICMPError={fragShowICMPError} />
-    case 'net-ttl':
-      return <TTLViz />
     case 'net-network-host-id':
       return <IPAddressingViz />
     case 'net-classful-addressing':

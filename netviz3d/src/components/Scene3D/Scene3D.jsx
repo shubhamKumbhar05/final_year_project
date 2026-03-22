@@ -5,6 +5,7 @@ import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { motion, AnimatePresence } from 'framer-motion'
 /* eslint-enable no-unused-vars */
 import ConceptVisualizations from './ConceptVisualizations'
+import CwndWindowPanel from './CwndWindowPanel'
 import { getConceptInfo } from '../../data/conceptNames'
 
 /**
@@ -33,35 +34,32 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
   const [flowControlDrainSpeed, setFlowControlDrainSpeed] = useState(0.5)
   const [flowControlSimulateFullBuffer, setFlowControlSimulateFullBuffer] = useState(false)
   const [flowControlClearBuffer, setFlowControlClearBuffer] = useState(0)
+  const [multiplexingIsRunning, setMultiplexingIsRunning] = useState(false)
+  const [multiplexingUiMessage, setMultiplexingUiMessage] = useState('')
+  const [multiplexingResetTrigger, setMultiplexingResetTrigger] = useState(0)
   const [tcpUdpIsRunning, setTcpUdpIsRunning] = useState(false)
   const [tcpUdpIsTCP, setTcpUdpIsTCP] = useState(true)
   const [tcpUdpUiMessage, setTcpUdpUiMessage] = useState('')
   const [tcpUdpResetTrigger, setTcpUdpResetTrigger] = useState(0)
   const [tcpUdpSimulateLoss, setTcpUdpSimulateLoss] = useState(false)
-  const [ipFragIsAttempting, setIpFragIsAttempting] = useState(false)
-  const [ipFragDFEnabled, setIpFragDFEnabled] = useState(false)
-  const [ipFragOutOfOrder, setIpFragOutOfOrder] = useState(false)
-  const [ipFragShowICMPError, setIpFragShowICMPError] = useState(false)
-  const [ipFragUiMessage, setIpFragUiMessage] = useState('')
-  const [fragmentation_isAttempting, setFragmentation_isAttempting] = useState(false)
-  const [fragmentation_isDFEnabled, setFragmentation_isDFEnabled] = useState(false)
-  const [fragmentation_isOutOfOrder, setFragmentation_isOutOfOrder] = useState(false)
-  const [fragmentationUiMessage, setFragmentationUiMessage] = useState('')
-  const [fragmentation_showICMPError, setFragmentation_showICMPError] = useState(false)
   const [congestionCtrlIsRunning, setCongestionCtrlIsRunning] = useState(false)
   const [congestionCtrlUiMessage, setCongestionCtrlUiMessage] = useState('')
   const [congestionCtrlResetTrigger, setCongestionCtrlResetTrigger] = useState(0)
   const [congestionCtrlNetworkCongestionTrigger, setCongestionCtrlNetworkCongestionTrigger] = useState(0)
   const [congestionCtrlPanelHeight, setCongestionCtrlPanelHeight] = useState(200)
+  const [congestionCtrlMetrics, setCongestionCtrlMetrics] = useState({
+    cwnd: 1,
+    ssthresh: 8,
+    maxCwnd: 25,
+    stateColor: '#9ca3af',
+  })
   const isTCPConcept = selectedConceptId === 'trans-tcp-conn'
   const isSegmentationConcept = selectedConceptId === 'trans-segmentation'
   const isACKConcept = selectedConceptId === 'trans-ack'
   const isFlowControlConcept = selectedConceptId === 'trans-flow-ctrl'
+  const isMultiplexingConcept = selectedConceptId === 'trans-retrans'
   const isTcpVsUdpConcept = selectedConceptId === 'trans-tcp-vs-udp'
-  const isIPFragmentationConcept = selectedConceptId === 'net-ip-fragmentation'
   const orbitControlsRef = useRef(null)
-  const ipFragStartTimerRef = useRef(null)
-  const isFragmentationConcept = selectedConceptId === 'net-fragmentation'
   const isCongestionControlConcept = selectedConceptId === 'trans-congestion-ctrl'
   const congestionCtrlPanelRef = useRef(null)
 
@@ -110,6 +108,12 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
     setCongestionCtrlIsRunning(false)
     setCongestionCtrlUiMessage('')
     setCongestionCtrlResetTrigger(prev => prev + 1)
+    setCongestionCtrlMetrics({
+      cwnd: 1,
+      ssthresh: 8,
+      maxCwnd: 25,
+      stateColor: '#9ca3af',
+    })
     setTimeout(() => {
       setCongestionCtrlUiMessage('✅ Visualization reset to default state')
       setTimeout(() => setCongestionCtrlUiMessage(''), 2000)
@@ -215,46 +219,6 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
     }, 100)
   }
 
-  const handleFragmentationReset = () => {
-    // Reset all fragmentation states
-    setFragmentation_isAttempting(false)
-    setFragmentation_isDFEnabled(false)
-    setFragmentation_isOutOfOrder(false)
-    setFragmentation_showICMPError(false)
-    setFragmentationUiMessage('')
-    // Show reset confirmation feedback
-    setTimeout(() => {
-      setFragmentationUiMessage('✅ Visualization reset - ready for new transmission attempt')
-      setTimeout(() => {
-        setFragmentationUiMessage('')
-      }, 2000)
-    }, 100)
-  }
-
-  const handleFragmentationICMPError = () => {
-    // Trigger ICMP error scenario
-    setFragmentation_showICMPError(true)
-    setFragmentation_isDFEnabled(true)
-    setFragmentation_isAttempting(true)
-    setFragmentationUiMessage('📤 Sending 1500-byte datagram with DF flag enabled...')
-    setTimeout(() => {
-      setFragmentationUiMessage('❌ ERROR: Packet too large for MTU (1500 > 500)')
-    }, 800)
-    setTimeout(() => {
-      setFragmentationUiMessage('🔴 ICMP Error Message Generated: Destination Unreachable (Fragmentation Needed)')
-    }, 2200)
-    setTimeout(() => {
-      setFragmentationUiMessage('📨 ICMP Error returned to sender with required MTU size (500 bytes)')
-    }, 4000)
-    setTimeout(() => {
-      setFragmentation_isAttempting(false)
-    }, 5500)
-  }
-
-  const setACKUiMessage = (message) => {
-    setAckUiMessage(message)
-  }
-
   const handleFlowControlStart = () => {
     if (!flowControlIsRunning) {
       setFlowControlIsRunning(true)
@@ -287,36 +251,8 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
     setTcpUdpResetTrigger(prev => prev + 1)
   }
 
-  const handleIpFragStart = () => {
-    // Force a clean false -> true edge so IPFragmentationStage starts each time.
-    setIpFragIsAttempting(false)
-    if (ipFragStartTimerRef.current) {
-      clearTimeout(ipFragStartTimerRef.current)
-    }
-
-    ipFragStartTimerRef.current = setTimeout(() => {
-      setIpFragIsAttempting(true)
-      if (ipFragDFEnabled) {
-        setIpFragUiMessage('DF=ON: Packet rejected at MTU bottleneck. ICMP can be shown.')
-      } else if (ipFragOutOfOrder) {
-        setIpFragUiMessage('DF=OFF: Out-of-order fragment arrival and destination reordering.')
-      } else {
-        setIpFragUiMessage('DF=OFF: In-order fragmentation and successful reassembly.')
-      }
-    }, 60)
-  }
-
-  const handleIpFragReset = () => {
-    if (ipFragStartTimerRef.current) {
-      clearTimeout(ipFragStartTimerRef.current)
-      ipFragStartTimerRef.current = null
-    }
-    setIpFragIsAttempting(false)
-    setIpFragDFEnabled(false)
-    setIpFragOutOfOrder(false)
-    setIpFragShowICMPError(false)
-    setIpFragUiMessage('✅ Fragmentation visualization reset')
-    setTimeout(() => setIpFragUiMessage(''), 2000)
+  const setACKUiMessage = (message) => {
+    setAckUiMessage(message)
   }
 
   // Reset triggerClosing and triggerScenario after animation completes (8 seconds)
@@ -330,14 +266,6 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
     }
   }, [triggerClosing])
 
-  // Cleanup pending timers for fragmentation controls.
-  useEffect(() => {
-    return () => {
-      if (ipFragStartTimerRef.current) {
-        clearTimeout(ipFragStartTimerRef.current)
-      }
-    }
-  }, [])
   useEffect(() => {
     if (!isCongestionControlConcept) return
 
@@ -389,8 +317,8 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
                 autoRotate={false}
                 enableDamping={true}
                 dampingFactor={0.05}
-                minPolarAngle={1.0}
-                maxPolarAngle={1.0}
+                minPolarAngle={0.25}
+                maxPolarAngle={Math.PI - 0.25}
               />
               
               {/* Lighting */}
@@ -419,28 +347,35 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
                   flowControlDrainSpeed={isFlowControlConcept ? flowControlDrainSpeed : undefined}
                   flowControlSimulateFullBuffer={isFlowControlConcept ? flowControlSimulateFullBuffer : undefined}
                   flowControlClearBuffer={isFlowControlConcept ? flowControlClearBuffer : undefined}
+                  multiplexingIsRunning={isMultiplexingConcept ? multiplexingIsRunning : undefined}
+                  onMultiplexingMessage={isMultiplexingConcept ? setMultiplexingUiMessage : undefined}
+                  multiplexingResetTrigger={isMultiplexingConcept ? multiplexingResetTrigger : undefined}
                   tcpUdpIsRunning={isTcpVsUdpConcept ? tcpUdpIsRunning : undefined}
                   tcpUdpIsTCP={isTcpVsUdpConcept ? tcpUdpIsTCP : undefined}
                   onTcpUdpMessage={isTcpVsUdpConcept ? setTcpUdpUiMessage : undefined}
                   tcpUdpResetTrigger={isTcpVsUdpConcept ? tcpUdpResetTrigger : undefined}
                   tcpUdpSimulateLoss={isTcpVsUdpConcept ? tcpUdpSimulateLoss : undefined}
-                  ipFragIsAttempting={isIPFragmentationConcept ? ipFragIsAttempting : undefined}
-                  ipFragDFEnabled={isIPFragmentationConcept ? ipFragDFEnabled : undefined}
-                  ipFragOutOfOrder={isIPFragmentationConcept ? ipFragOutOfOrder : undefined}
-                  ipFragShowICMPError={isIPFragmentationConcept ? ipFragShowICMPError : undefined}
-                  isFragmentationAttempting={isFragmentationConcept ? fragmentation_isAttempting : undefined}
-                  isDFEnabled={isFragmentationConcept ? fragmentation_isDFEnabled : undefined}
-                  isFragmentationOutOfOrder={isFragmentationConcept ? fragmentation_isOutOfOrder : undefined}
-                  showICMPError={isFragmentationConcept ? fragmentation_showICMPError : undefined}
                   congestionCtrlIsRunning={isCongestionControlConcept ? congestionCtrlIsRunning : undefined}
                   onCongestionCtrlMessage={isCongestionControlConcept ? setCongestionCtrlUiMessage : undefined}
                   congestionCtrlResetTrigger={isCongestionControlConcept ? congestionCtrlResetTrigger : undefined}
+                  onCongestionCtrlStateUpdate={isCongestionControlConcept ? setCongestionCtrlMetrics : undefined}
                   congestionCtrlNetworkCongestionTrigger={isCongestionControlConcept ? congestionCtrlNetworkCongestionTrigger : undefined}
                 />
               </Suspense>
             </Canvas>
           </Suspense>
         </div>
+
+        {/* Floating CWND Window Panel - For Congestion Control Concept */}
+        {isCongestionControlConcept && (
+          <CwndWindowPanel
+            cwnd={congestionCtrlMetrics.cwnd}
+            ssthresh={congestionCtrlMetrics.ssthresh}
+            maxCwnd={congestionCtrlMetrics.maxCwnd}
+            stateColor={congestionCtrlMetrics.stateColor}
+            bottomOffset={congestionCtrlPanelHeight + 24}
+          />
+        )}
 
         {/* UI Overlay */}
         <motion.div
@@ -566,103 +501,6 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
               {/* Description */}
               <p className="text-cyan-200/60 text-sm leading-relaxed font-light mt-6 text-center">
                 Use your mouse to rotate, scroll to zoom, and drag to pan. Click buttons to visualize TCP connection scenarios.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Control Panel - For IP Fragmentation Concept */}
-        {isIPFragmentationConcept && (
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-10 z-10 pointer-events-none"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <div className="max-w-6xl mx-auto">
-              {ipFragUiMessage && (
-                <motion.div
-                  className="mb-6 p-5 rounded-lg bg-gradient-to-r from-sky-500/20 to-cyan-500/20 border border-sky-400/50 backdrop-blur-sm"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <p className="text-sky-200 font-semibold text-center text-lg">
-                    {ipFragUiMessage}
-                  </p>
-                </motion.div>
-              )}
-
-              <div className="flex flex-wrap gap-4 justify-center items-center pointer-events-auto px-4">
-                <motion.button
-                  onClick={handleIpFragStart}
-                  className="px-10 py-4 rounded-lg bg-gradient-to-r from-cyan-500/40 to-blue-500/30 border border-cyan-400/80 text-cyan-100 font-bold text-base whitespace-nowrap hover:from-cyan-500/50 hover:to-blue-500/40 shadow-lg shadow-cyan-500/20 transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  ▶ START TRANSMISSION
-                </motion.button>
-
-                <motion.button
-                  onClick={() => {
-                    const nextDF = !ipFragDFEnabled
-                    setIpFragDFEnabled(nextDF)
-                    if (nextDF) {
-                      setIpFragOutOfOrder(false)
-                    }
-                  }}
-                  className={`px-6 py-4 rounded-lg font-bold text-sm whitespace-nowrap transition-all duration-300 ${
-                    ipFragDFEnabled
-                      ? 'bg-gradient-to-r from-rose-500/50 to-red-500/40 border-2 border-rose-400/90 text-rose-100 shadow-lg shadow-rose-500/30'
-                      : 'bg-gradient-to-r from-emerald-500/40 to-green-500/30 border border-emerald-400/80 text-emerald-100 shadow-lg shadow-emerald-500/20'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {ipFragDFEnabled ? 'DF: ON (No Fragmentation)' : 'DF: OFF (Allow Fragmentation)'}
-                </motion.button>
-
-                <motion.button
-                  onClick={() => setIpFragOutOfOrder(prev => !prev)}
-                  disabled={ipFragDFEnabled}
-                  className={`px-6 py-4 rounded-lg font-bold text-sm whitespace-nowrap transition-all duration-300 ${
-                    ipFragDFEnabled
-                      ? 'bg-gradient-to-r from-slate-600/40 to-slate-700/30 border border-slate-400/50 text-slate-300 cursor-not-allowed opacity-60'
-                      : ipFragOutOfOrder
-                      ? 'bg-gradient-to-r from-amber-500/50 to-orange-500/40 border-2 border-amber-400/90 text-amber-100 shadow-lg shadow-amber-500/30'
-                      : 'bg-gradient-to-r from-indigo-500/40 to-violet-500/30 border border-indigo-400/80 text-indigo-100 shadow-lg shadow-indigo-500/20'
-                  }`}
-                  whileHover={ipFragDFEnabled ? {} : { scale: 1.05 }}
-                  whileTap={ipFragDFEnabled ? {} : { scale: 0.95 }}
-                >
-                  {ipFragOutOfOrder ? 'Out-of-Order: ON' : 'Out-of-Order: OFF'}
-                </motion.button>
-
-                <motion.button
-                  onClick={() => setIpFragShowICMPError(prev => !prev)}
-                  className={`px-6 py-4 rounded-lg font-bold text-sm whitespace-nowrap transition-all duration-300 ${
-                    ipFragShowICMPError
-                      ? 'bg-gradient-to-r from-red-500/50 to-rose-500/40 border-2 border-red-400/90 text-red-100 shadow-lg shadow-red-500/30'
-                      : 'bg-gradient-to-r from-slate-600/40 to-slate-700/30 border border-slate-400/50 text-slate-300 shadow-lg shadow-slate-600/20'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {ipFragShowICMPError ? 'ICMP Error: ON' : 'ICMP Error: OFF'}
-                </motion.button>
-
-                <motion.button
-                  onClick={handleIpFragReset}
-                  className="px-10 py-4 rounded-lg bg-gradient-to-r from-red-500/50 to-red-600/40 border-2 border-red-400/80 text-red-100 font-bold text-base whitespace-nowrap hover:from-red-500/70 hover:to-red-600/60 hover:border-red-300 transition-all duration-300 shadow-lg shadow-red-500/30"
-                  whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(239, 68, 68, 0.6)' }}
-                  whileTap={{ scale: 0.92 }}
-                >
-                  RESET
-                </motion.button>
-              </div>
-
-              <p className="text-cyan-200/60 text-sm leading-relaxed font-light text-center px-4 mt-4">
-                Toggle DF and ordering mode, then start transmission to visualize MTU bottlenecks, fragmentation, and reassembly.
               </p>
             </div>
           </motion.div>
@@ -979,6 +817,65 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
           </motion.div>
         )}
 
+        {/* Control Panel - For Multiplexing and Demultiplexing Concept */}
+        {isMultiplexingConcept && (
+          <motion.div
+            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-10 z-10 pointer-events-none"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <div className="max-w-6xl mx-auto">
+              {multiplexingUiMessage && (
+                <motion.div
+                  className="mb-8 p-5 rounded-lg bg-gradient-to-r from-blue-500/20 to-violet-500/20 border border-blue-400/50 backdrop-blur-sm"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <p className="text-blue-300 font-semibold text-center text-lg">
+                    {multiplexingUiMessage}
+                  </p>
+                </motion.div>
+              )}
+
+              <div className="flex flex-wrap gap-4 justify-center items-center pointer-events-auto px-4">
+                <motion.button
+                  onClick={handleMultiplexingStart}
+                  disabled={multiplexingIsRunning}
+                  className={`px-10 py-4 rounded-lg font-bold text-base whitespace-nowrap
+                             transition-all duration-300 flex items-center gap-3 flex-shrink-0 ${
+                    multiplexingIsRunning
+                      ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/10 border border-green-400/30 text-green-300 cursor-not-allowed opacity-60'
+                      : 'bg-gradient-to-r from-green-500/40 to-emerald-500/30 border border-green-400/80 text-green-200 hover:from-green-500/50 hover:to-emerald-500/40 shadow-lg shadow-green-500/20'
+                  }`}
+                  whileHover={multiplexingIsRunning ? {} : { scale: 1.05 }}
+                  whileTap={multiplexingIsRunning ? {} : { scale: 0.95 }}
+                >
+                  START
+                </motion.button>
+
+                <motion.button
+                  onClick={handleMultiplexingReset}
+                  className="px-12 py-4 rounded-lg bg-gradient-to-r from-red-500/50 to-red-600/40 
+                             border-2 border-red-400/80 text-red-100 font-bold text-base whitespace-nowrap
+                             hover:from-red-500/70 hover:to-red-600/60 hover:border-red-300
+                             transition-all duration-300 flex items-center gap-3 flex-shrink-0 
+                             shadow-lg shadow-red-500/30 hover:shadow-red-500/50"
+                  whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(239, 68, 68, 0.6)' }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  RESET
+                </motion.button>
+              </div>
+
+              <p className="text-cyan-200/60 text-sm leading-relaxed font-light text-center px-4 mt-3">
+                Use your mouse to rotate, scroll to zoom, and drag to pan. Click START to animate stream multiplexing into one channel and demultiplexing at the receiver.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Control Panel - For TCP vs UDP Concept */}
         {isTcpVsUdpConcept && (
           <motion.div
@@ -1160,140 +1057,8 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
           </motion.div>
         )}
 
-        {/* Control Panel - For Fragmentation Concept */}
-        {isFragmentationConcept && (
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent p-8 z-10 pointer-events-none"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <div className="max-w-5xl mx-auto">
-              {/* Status Message */}
-              <div className="mb-6 p-4 rounded-lg bg-slate-900/50 border border-cyan-500/30">
-                <p className="text-cyan-300 font-semibold text-center">
-                  {fragmentationUiMessage || 'Ready to attempt transmission'}
-                </p>
-              </div>
-
-              {/* Control Buttons */}
-              <div className="flex flex-wrap gap-3 justify-center items-center pointer-events-auto px-4">
-                {/* DF Flag Toggle */}
-                <motion.button
-                  onClick={() => setFragmentation_isDFEnabled(!fragmentation_isDFEnabled)}
-                  className={`px-6 py-3 rounded-lg font-semibold text-sm whitespace-nowrap
-                             transition-all duration-300 flex items-center gap-2 shrink-0 ${
-                    fragmentation_isDFEnabled
-                      ? 'bg-gradient-to-r from-red-500/40 to-rose-500/30 border border-red-400/60 text-red-300 hover:from-red-500/60 hover:to-rose-500/50'
-                      : 'bg-gradient-to-r from-blue-500/40 to-cyan-500/30 border border-blue-400/60 text-blue-300 hover:from-blue-500/60 hover:to-cyan-500/50'
-                  }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span>{fragmentation_isDFEnabled ? '🚫' : '✅'}</span> 
-                  {fragmentation_isDFEnabled ? 'DF Flag: ON' : 'DF Flag: OFF'}
-                </motion.button>
-
-                {/* Attempt Transmission Button */}
-                <motion.button
-                  onClick={() => {
-                    setFragmentation_isAttempting(true)
-                    if (fragmentation_isDFEnabled) {
-                      setFragmentationUiMessage('⚠️ Router attempting to transmit 1500-byte datagram through 500-byte MTU tunnel...')
-                      setTimeout(() => {
-                        setFragmentationUiMessage('❌ Datagram rejected! Too large for tunnel. Needs fragmentation.')
-                        setTimeout(() => {
-                          setFragmentation_isAttempting(false)
-                        }, 2000)
-                      }, 800)
-                    } else {
-                      setFragmentationUiMessage('📦 Router fragmenting 1500-byte datagram into 3 fragments...')
-                      setTimeout(() => {
-                        if (fragmentation_isOutOfOrder) {
-                          setFragmentationUiMessage('🔀 Fragments arriving out-of-order: [2, 0, 1]...')
-                        } else {
-                          setFragmentationUiMessage('📤 Fragments traveling in sequence: [0, 1, 2]...')
-                        }
-                      }, 800)
-                    }
-                  }}
-                  className="px-6 py-3 rounded-lg bg-gradient-to-r from-orange-500/40 to-yellow-500/30 
-                             border border-orange-400/60 text-orange-300 font-semibold text-sm whitespace-nowrap
-                             hover:from-orange-500/60 hover:to-yellow-500/50 hover:border-orange-300
-                             transition-all duration-300 flex items-center gap-2 shrink-0"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span>📤</span> Attempt Transmission
-                </motion.button>
-
-                {/* ICMP Error Scenario Button - Phase 4 */}
-                <motion.button
-                  onClick={handleFragmentationICMPError}
-                  className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500/40 to-violet-500/30 
-                             border border-purple-400/60 text-purple-300 font-semibold text-sm whitespace-nowrap
-                             hover:from-purple-500/60 hover:to-violet-500/50 hover:border-purple-300
-                             transition-all duration-300 flex items-center gap-2 shrink-0"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span>🔴</span> ICMP Error
-                </motion.button>
-
-                {/* Out-of-Order Mode Toggle - Only visible when fragmentation is allowed (DF=OFF) */}
-                {!fragmentation_isDFEnabled && (
-                  <motion.button
-                    onClick={() => setFragmentation_isOutOfOrder(!fragmentation_isOutOfOrder)}
-                    className={`px-6 py-3 rounded-lg font-semibold text-sm whitespace-nowrap
-                               transition-all duration-300 flex items-center gap-2 shrink-0 ${
-                      fragmentation_isOutOfOrder
-                        ? 'bg-gradient-to-r from-purple-500/40 to-pink-500/30 border border-purple-400/60 text-purple-300 hover:from-purple-500/60 hover:to-pink-500/50'
-                        : 'bg-gradient-to-r from-emerald-500/40 to-green-500/30 border border-emerald-400/60 text-emerald-300 hover:from-emerald-500/60 hover:to-green-500/50'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span>{fragmentation_isOutOfOrder ? '🔀' : '📊'}</span> 
-                    {fragmentation_isOutOfOrder ? 'Mode: Out-of-Order' : 'Mode: In-Order'}
-                  </motion.button>
-                )}
-
-                {/* Reset Button */}
-                <motion.button
-                  onClick={handleFragmentationReset}
-                  className="px-6 py-3 rounded-lg bg-gradient-to-r from-red-500/50 to-red-600/40 
-                             border border-red-400/60 text-red-300 font-semibold text-sm whitespace-nowrap
-                             hover:from-red-500/70 hover:to-red-600/60 hover:border-red-300
-                             transition-all duration-300 flex items-center gap-2 shrink-0
-                             shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <span>↺</span> Reset
-                </motion.button>
-              </div>
-
-              {/* Info Messages */}
-              <div className="flex flex-wrap gap-2 justify-center mt-4 px-4">
-                <div className="text-cyan-300/70 text-xs font-light px-3 py-2 bg-slate-800/50 rounded border border-cyan-500/20">
-                  {fragmentation_isDFEnabled ? 'DF=ON: Packet rejected if too large' : 'DF=OFF: Packet will be fragmented'}
-                </div>
-                {!fragmentation_isDFEnabled && (
-                  <div className="text-cyan-300/70 text-xs font-light px-3 py-2 bg-slate-800/50 rounded border border-cyan-500/20">
-                    {fragmentation_isOutOfOrder ? 'Phase 3: Out-of-order fragments reassembled by offset' : 'Phase 2: Sequential fragment delivery'}
-                  </div>
-                )}
-              </div>
-
-              <p className="text-cyan-200/60 text-sm leading-relaxed font-light mt-6 text-center">
-                Click "Attempt Transmission" to see what happens when a large packet reaches a narrower link. Toggle DF Flag to enable/disable fragmentation.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
         {/* Info Panel - For Non-Interactive Concepts */}
-        {!isTCPConcept && !isSegmentationConcept && !isACKConcept && !isFlowControlConcept && !isTcpVsUdpConcept && !isFragmentationConcept && (
+        {!isTCPConcept && !isSegmentationConcept && !isACKConcept && !isFlowControlConcept && !isTcpVsUdpConcept && (
           <motion.div
             className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-8 z-10 pointer-events-none"
             initial={{ opacity: 0, y: 20 }}

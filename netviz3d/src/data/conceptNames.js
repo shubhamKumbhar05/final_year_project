@@ -71,13 +71,6 @@ export const conceptMapping = {
     layer: 'Transport',
     icon: '⚖️'
   },
-  'trans-flow-delay': {
-    name: 'Delays in Flow Control',
-    fullName: 'Transmission, Propagation, Queue, and Processing Delay',
-    color: '#bfdbfe',
-    layer: 'Transport',
-    icon: '⏱️'
-  },
   'trans-tcp-vs-udp': {
     name: 'TCP vs UDP',
     fullName: 'Connection Oriented vs Connectionless',
@@ -100,34 +93,6 @@ export const conceptMapping = {
     color: '#38bdf8',
     layer: 'Network',
     icon: 'IP'
-  },
-  'net-ip-fragmentation': {
-    name: 'IP Fragmentation',
-    fullName: 'MTU Bottleneck and Reassembly',
-    color: '#0ea5e9',
-    layer: 'Network',
-    icon: '🧩'
-  },
-  'net-ip-addr': {
-    name: 'IP Addressing',
-    fullName: 'Internet Protocol Addressing',
-    color: '#06b6d4',
-    layer: 'Network',
-    icon: '🏷️'
-  },
-  'net-fragmentation': {
-    name: 'Fragmentation',
-    fullName: 'IP Datagram Fragmentation',
-    color: '#06b6d4',
-    layer: 'Network',
-    icon: '✂️'
-  },
-  'net-ttl': {
-    name: 'TTL',
-    fullName: 'Time To Live',
-    color: '#22d3ee',
-    layer: 'Network',
-    icon: '⏰'
   },
   'net-network-host-id': {
     name: 'Network & Host ID',

@@ -6,7 +6,6 @@ import TCPConnectionViz from './TCPConnectionViz'
 import SegmentationStage from './SegmentationStage'
 import ACKViz from './ACKViz'
 import FlowControlViz from './FlowControlViz'
-import FlowDelayConceptViz from './FlowDelayConceptViz'
 import TcpUdpViz from './TcpUdpViz'
 import MultiplexingDemultiplexingViz from './MultiplexingDemultiplexingViz'
 import CongestionControlViz from './CongestionControlViz'
@@ -80,8 +79,6 @@ export default function TransportLayerViz({ conceptId = 'trans-segmentation', tr
       return <MultiplexingDemultiplexingViz isRunning={multiplexingIsRunning} onStatusUpdate={onMultiplexingMessage} resetTrigger={multiplexingResetTrigger} />
     case 'trans-flow-ctrl':
       return <FlowControlViz isRunning={flowControlIsRunning} onMessage={onFlowControlMessage} resetTrigger={flowControlResetTrigger} drainSpeed={flowControlDrainSpeed} simulateFullBuffer={flowControlSimulateFullBuffer} clearBuffer={flowControlClearBuffer} />
-    case 'trans-flow-delay':
-      return <FlowDelayConceptViz />
     case 'trans-tcp-vs-udp':
       return <TcpUdpViz isRunning={tcpUdpIsRunning} isTCP={tcpUdpIsTCP} onMessage={onTcpUdpMessage} resetTrigger={tcpUdpResetTrigger} simulateLoss={tcpUdpSimulateLoss} />
     case 'trans-congestion-ctrl':

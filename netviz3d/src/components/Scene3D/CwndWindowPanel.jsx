@@ -10,16 +10,21 @@ export default function CwndWindowPanel({
   cwnd = 1, 
   ssthresh = 8, 
   maxCwnd = 25, 
-  stateColor = '#9ca3af'
+  stateColor = '#9ca3af',
+  bottomOffset = 220,
 }) {
-  // Calculate indicator positions (0-25 range mapped to window)
-  const thresholdPercent = (ssthresh / 25) * 100
-  const maxPercent = (maxCwnd / 25) * 100
-  const cwndPercent = (cwnd / 25) * 100
+  // Scale values to the active max range and clamp to avoid overflow artifacts.
+  const rangeMax = Math.max(1, maxCwnd)
+  const safeCwnd = Math.min(rangeMax, Math.max(0, cwnd))
+  const safeSsthresh = Math.min(rangeMax, Math.max(0, ssthresh))
+  const thresholdPercent = (safeSsthresh / rangeMax) * 100
+  const maxPercent = (maxCwnd / rangeMax) * 100
+  const cwndPercent = (safeCwnd / rangeMax) * 100
 
   return (
     <motion.div
-      className="fixed bottom-48 left-1/2 transform -translate-x-1/2 z-50 pointer-events-auto w-4/5"
+      className="fixed left-1/2 transform -translate-x-1/2 z-20 pointer-events-none w-4/5"
+      style={{ bottom: `${bottomOffset}px` }}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5, duration: 0.5 }}

@@ -87,13 +87,6 @@ export const OSI_LAYERS = [
         visualGoal: 'Show sliding window mechanism',
       },
       {
-        id: 'trans-flow-delay',
-        name: 'Delays in Flow Control',
-        meaning: 'RTT impact from transmission, propagation, queuing, and processing delay',
-        example: 'High traffic load increases queue delay and raises RTT for ACK loop',
-        visualGoal: 'Visualize all delay components with a live RTT counter and stacked-delay view',
-      },
-      {
         id: 'trans-congestion-ctrl',
         name: 'Congestion Control',
         meaning: 'Managing transmission rate to prevent network congestion and packet loss',
@@ -122,34 +115,6 @@ export const OSI_LAYERS = [
         meaning: 'The packet travel document routers inspect to forward, validate, and expire traffic safely',
         example: 'Version 4, TTL 64, Protocol 6, Source 192.168.1.10, Destination 10.0.0.42',
         visualGoal: 'Inspect and edit an IPv4 header while watching TTL, encapsulation, and checksum behavior in 3D',
-      },
-      {
-        id: 'net-ip-fragmentation',
-        name: 'IP Fragmentation',
-        meaning: 'Large datagrams are split when the next-hop MTU is smaller than packet size',
-        example: '1500-byte IPv4 datagram crossing an MTU 500 tunnel, then reassembled at destination',
-        visualGoal: 'Show DF ON rejection vs DF OFF fragmentation and destination reassembly behavior',
-      },
-      {
-        id: 'net-ip-addr',
-        name: 'IP Addressing',
-        meaning: 'Unique identity assigned to each device on a network',
-        example: 'Laptop with IP 192.168.1.10',
-        visualGoal: 'Display IP labels on network nodes',
-      },
-      {
-        id: 'net-fragmentation',
-        name: 'Fragmentation (IP Datagram)',
-        meaning: 'Breaking a large IP datagram into smaller fragments to fit MTU constraints',
-        example: 'Fragmentation when packet size exceeds MTU of 1500 bytes on Ethernet',
-        visualGoal: 'Show datagram splitting into smaller fragments',
-      },
-      {
-        id: 'net-ttl',
-        name: 'Time To Live (TTL)',
-        meaning: 'Time-To-Live field that prevents packets from circulating forever in the network',
-        example: 'TTL=64, decrements by 1 at each router hop; packet discarded when TTL=0',
-        visualGoal: 'Show TTL counter decreasing with each hop',
       },
       {
         id: 'net-network-host-id',

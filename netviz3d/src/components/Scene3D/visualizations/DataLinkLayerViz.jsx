@@ -3,6 +3,12 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import FramingConceptViz from './FramingConceptViz'
 import ErrorTypeConceptViz from './ErrorTypeConceptViz'
+import CRCConceptViz from './CRCConceptViz'
+import HammingCodeConceptViz from './HammingCodeConceptViz'
+import Parity2DConceptViz from './Parity2DConceptViz'
+import FlowDelayConceptViz from './FlowDelayConceptViz'
+
+import ChecksumConceptViz from './ChecksumConceptViz'
 
 /**
  * Data Link Layer Visualization - Per-Concept Models
@@ -125,6 +131,31 @@ function ErrorCheckingViz() {
   return <ErrorTypeConceptViz />
 }
 
+// CRC Visualization
+function CRCViz() {
+  return <CRCConceptViz />
+}
+
+// Hamming Code Visualization
+function HammingCodeViz() {
+  return <HammingCodeConceptViz />
+}
+
+// Checksum Visualization
+function ChecksumViz() {
+  return <ChecksumConceptViz />
+}
+
+function FlowDelayViz() {
+  return <FlowDelayConceptViz />
+}
+
+
+// 2D Parity Visualization
+function Parity2DViz() {
+  return <Parity2DConceptViz />;
+}
+
 export default function DataLinkLayerViz({ conceptId = 'dl-mac-addr' }) {
   switch (conceptId) {
     case 'dl-mac-addr':
@@ -135,6 +166,16 @@ export default function DataLinkLayerViz({ conceptId = 'dl-mac-addr' }) {
       return <ARPViz />
     case 'dl-error-check':
       return <ErrorCheckingViz />
+    case 'dl-crc':
+      return <CRCViz />
+    case 'dl-hamming':
+      return <HammingCodeViz />
+    case 'dl-checksum':
+      return <ChecksumViz />
+    case 'dl-flow-delay':
+      return <FlowDelayViz />
+    case 'datalink-2d-parity':
+      return <Parity2DViz />
     default:
       return <MACAddressViz />
   }

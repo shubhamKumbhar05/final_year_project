@@ -71,6 +71,13 @@ export const conceptMapping = {
     layer: 'Transport',
     icon: '⚖️'
   },
+  'trans-flow-delay': {
+    name: 'Delays in Flow Control',
+    fullName: 'Transmission, Propagation, Queue, and Processing Delay',
+    color: '#bfdbfe',
+    layer: 'Transport',
+    icon: '⏱️'
+  },
   'trans-tcp-vs-udp': {
     name: 'TCP vs UDP',
     fullName: 'Connection Oriented vs Connectionless',
@@ -79,7 +86,21 @@ export const conceptMapping = {
     icon: '⚡'
   },
 
-  // Network Layer (7 concepts)
+  // Network Layer (9 concepts)
+  'net-ipv4-header': {
+    name: 'IPv4 Header',
+    fullName: 'IPv4 Packet Inspector',
+    color: '#38bdf8',
+    layer: 'Network',
+    icon: 'IP'
+  },
+  'net-ip-fragmentation': {
+    name: 'IP Fragmentation',
+    fullName: 'MTU Bottleneck and Reassembly',
+    color: '#0ea5e9',
+    layer: 'Network',
+    icon: '🧩'
+  },
   'net-ip-addr': {
     name: 'IP Addressing',
     fullName: 'Internet Protocol Addressing',
@@ -154,10 +175,49 @@ export const conceptMapping = {
   },
   'dl-error-check': {
     name: 'Error Checking',
-    fullName: 'CRC Error Detection',
+    fullName: 'Bit Error Type Checking',
     color: '#ddd6fe',
     layer: 'Data Link',
     icon: '✔️'
+  },
+  'dl-crc': {
+    name: 'CRC',
+    fullName: 'Cyclic Redundancy Check',
+    color: '#c084fc',
+    layer: 'Data Link',
+    icon: '🧮'
+  },
+
+  'dl-checksum': {
+    name: 'Checksum',
+    fullName: '1\'s Complement Checksum',
+    color: '#fbbf24',
+    layer: 'Data Link',
+    icon: '🧾'
+  },
+
+  'dl-hamming': {
+    name: 'Hamming Code',
+    fullName: 'Hamming (7,4) Error Correction',
+    color: '#38bdf8',
+    layer: 'Data Link',
+    icon: '🧬'
+  },
+
+  'dl-flow-delay': {
+    name: 'Delays in Flow Control',
+    fullName: 'Transmission, Propagation, Queue, and Processing Delay',
+    color: '#93c5fd',
+    layer: 'Data Link',
+    icon: '⏱️'
+  },
+
+  'datalink-2d-parity': {
+    name: '2D Parity',
+    fullName: 'Two-Dimensional Parity Check',
+    color: '#fbbf24',
+    layer: 'Data Link',
+    icon: '🟦'
   },
 
   // Session Layer (4 concepts)

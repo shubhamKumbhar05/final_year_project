@@ -38,12 +38,19 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
   const [tcpUdpUiMessage, setTcpUdpUiMessage] = useState('')
   const [tcpUdpResetTrigger, setTcpUdpResetTrigger] = useState(0)
   const [tcpUdpSimulateLoss, setTcpUdpSimulateLoss] = useState(false)
+  const [ipFragIsAttempting, setIpFragIsAttempting] = useState(false)
+  const [ipFragDFEnabled, setIpFragDFEnabled] = useState(false)
+  const [ipFragOutOfOrder, setIpFragOutOfOrder] = useState(false)
+  const [ipFragShowICMPError, setIpFragShowICMPError] = useState(false)
+  const [ipFragUiMessage, setIpFragUiMessage] = useState('')
   const isTCPConcept = selectedConceptId === 'trans-tcp-conn'
   const isSegmentationConcept = selectedConceptId === 'trans-segmentation'
   const isACKConcept = selectedConceptId === 'trans-ack'
   const isFlowControlConcept = selectedConceptId === 'trans-flow-ctrl'
   const isTcpVsUdpConcept = selectedConceptId === 'trans-tcp-vs-udp'
+  const isIPFragmentationConcept = selectedConceptId === 'net-ip-fragmentation'
   const orbitControlsRef = useRef(null)
+  const ipFragStartTimerRef = useRef(null)
 
   const handleTriggerScenario = (scenario) => {
     // First clear the trigger
@@ -190,6 +197,38 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
     setTcpUdpResetTrigger(prev => prev + 1)
   }
 
+  const handleIpFragStart = () => {
+    // Force a clean false -> true edge so IPFragmentationStage starts each time.
+    setIpFragIsAttempting(false)
+    if (ipFragStartTimerRef.current) {
+      clearTimeout(ipFragStartTimerRef.current)
+    }
+
+    ipFragStartTimerRef.current = setTimeout(() => {
+      setIpFragIsAttempting(true)
+      if (ipFragDFEnabled) {
+        setIpFragUiMessage('DF=ON: Packet rejected at MTU bottleneck. ICMP can be shown.')
+      } else if (ipFragOutOfOrder) {
+        setIpFragUiMessage('DF=OFF: Out-of-order fragment arrival and destination reordering.')
+      } else {
+        setIpFragUiMessage('DF=OFF: In-order fragmentation and successful reassembly.')
+      }
+    }, 60)
+  }
+
+  const handleIpFragReset = () => {
+    if (ipFragStartTimerRef.current) {
+      clearTimeout(ipFragStartTimerRef.current)
+      ipFragStartTimerRef.current = null
+    }
+    setIpFragIsAttempting(false)
+    setIpFragDFEnabled(false)
+    setIpFragOutOfOrder(false)
+    setIpFragShowICMPError(false)
+    setIpFragUiMessage('✅ Fragmentation visualization reset')
+    setTimeout(() => setIpFragUiMessage(''), 2000)
+  }
+
   // Reset triggerClosing and triggerScenario after animation completes (8 seconds)
   useEffect(() => {
     if (triggerClosing) {
@@ -200,6 +239,15 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
       return () => clearTimeout(timer)
     }
   }, [triggerClosing])
+
+  // Cleanup pending timers for fragmentation controls.
+  useEffect(() => {
+    return () => {
+      if (ipFragStartTimerRef.current) {
+        clearTimeout(ipFragStartTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <AnimatePresence>
@@ -273,6 +321,10 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
                   onTcpUdpMessage={isTcpVsUdpConcept ? setTcpUdpUiMessage : undefined}
                   tcpUdpResetTrigger={isTcpVsUdpConcept ? tcpUdpResetTrigger : undefined}
                   tcpUdpSimulateLoss={isTcpVsUdpConcept ? tcpUdpSimulateLoss : undefined}
+                  ipFragIsAttempting={isIPFragmentationConcept ? ipFragIsAttempting : undefined}
+                  ipFragDFEnabled={isIPFragmentationConcept ? ipFragDFEnabled : undefined}
+                  ipFragOutOfOrder={isIPFragmentationConcept ? ipFragOutOfOrder : undefined}
+                  ipFragShowICMPError={isIPFragmentationConcept ? ipFragShowICMPError : undefined}
                 />
               </Suspense>
             </Canvas>
@@ -403,6 +455,103 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
               {/* Description */}
               <p className="text-cyan-200/60 text-sm leading-relaxed font-light mt-6 text-center">
                 Use your mouse to rotate, scroll to zoom, and drag to pan. Click buttons to visualize TCP connection scenarios.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Control Panel - For IP Fragmentation Concept */}
+        {isIPFragmentationConcept && (
+          <motion.div
+            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-10 z-10 pointer-events-none"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <div className="max-w-6xl mx-auto">
+              {ipFragUiMessage && (
+                <motion.div
+                  className="mb-6 p-5 rounded-lg bg-gradient-to-r from-sky-500/20 to-cyan-500/20 border border-sky-400/50 backdrop-blur-sm"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <p className="text-sky-200 font-semibold text-center text-lg">
+                    {ipFragUiMessage}
+                  </p>
+                </motion.div>
+              )}
+
+              <div className="flex flex-wrap gap-4 justify-center items-center pointer-events-auto px-4">
+                <motion.button
+                  onClick={handleIpFragStart}
+                  className="px-10 py-4 rounded-lg bg-gradient-to-r from-cyan-500/40 to-blue-500/30 border border-cyan-400/80 text-cyan-100 font-bold text-base whitespace-nowrap hover:from-cyan-500/50 hover:to-blue-500/40 shadow-lg shadow-cyan-500/20 transition-all duration-300"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  ▶ START TRANSMISSION
+                </motion.button>
+
+                <motion.button
+                  onClick={() => {
+                    const nextDF = !ipFragDFEnabled
+                    setIpFragDFEnabled(nextDF)
+                    if (nextDF) {
+                      setIpFragOutOfOrder(false)
+                    }
+                  }}
+                  className={`px-6 py-4 rounded-lg font-bold text-sm whitespace-nowrap transition-all duration-300 ${
+                    ipFragDFEnabled
+                      ? 'bg-gradient-to-r from-rose-500/50 to-red-500/40 border-2 border-rose-400/90 text-rose-100 shadow-lg shadow-rose-500/30'
+                      : 'bg-gradient-to-r from-emerald-500/40 to-green-500/30 border border-emerald-400/80 text-emerald-100 shadow-lg shadow-emerald-500/20'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {ipFragDFEnabled ? 'DF: ON (No Fragmentation)' : 'DF: OFF (Allow Fragmentation)'}
+                </motion.button>
+
+                <motion.button
+                  onClick={() => setIpFragOutOfOrder(prev => !prev)}
+                  disabled={ipFragDFEnabled}
+                  className={`px-6 py-4 rounded-lg font-bold text-sm whitespace-nowrap transition-all duration-300 ${
+                    ipFragDFEnabled
+                      ? 'bg-gradient-to-r from-slate-600/40 to-slate-700/30 border border-slate-400/50 text-slate-300 cursor-not-allowed opacity-60'
+                      : ipFragOutOfOrder
+                      ? 'bg-gradient-to-r from-amber-500/50 to-orange-500/40 border-2 border-amber-400/90 text-amber-100 shadow-lg shadow-amber-500/30'
+                      : 'bg-gradient-to-r from-indigo-500/40 to-violet-500/30 border border-indigo-400/80 text-indigo-100 shadow-lg shadow-indigo-500/20'
+                  }`}
+                  whileHover={ipFragDFEnabled ? {} : { scale: 1.05 }}
+                  whileTap={ipFragDFEnabled ? {} : { scale: 0.95 }}
+                >
+                  {ipFragOutOfOrder ? 'Out-of-Order: ON' : 'Out-of-Order: OFF'}
+                </motion.button>
+
+                <motion.button
+                  onClick={() => setIpFragShowICMPError(prev => !prev)}
+                  className={`px-6 py-4 rounded-lg font-bold text-sm whitespace-nowrap transition-all duration-300 ${
+                    ipFragShowICMPError
+                      ? 'bg-gradient-to-r from-red-500/50 to-rose-500/40 border-2 border-red-400/90 text-red-100 shadow-lg shadow-red-500/30'
+                      : 'bg-gradient-to-r from-slate-600/40 to-slate-700/30 border border-slate-400/50 text-slate-300 shadow-lg shadow-slate-600/20'
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {ipFragShowICMPError ? 'ICMP Error: ON' : 'ICMP Error: OFF'}
+                </motion.button>
+
+                <motion.button
+                  onClick={handleIpFragReset}
+                  className="px-10 py-4 rounded-lg bg-gradient-to-r from-red-500/50 to-red-600/40 border-2 border-red-400/80 text-red-100 font-bold text-base whitespace-nowrap hover:from-red-500/70 hover:to-red-600/60 hover:border-red-300 transition-all duration-300 shadow-lg shadow-red-500/30"
+                  whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(239, 68, 68, 0.6)' }}
+                  whileTap={{ scale: 0.92 }}
+                >
+                  RESET
+                </motion.button>
+              </div>
+
+              <p className="text-cyan-200/60 text-sm leading-relaxed font-light text-center px-4 mt-4">
+                Toggle DF and ordering mode, then start transmission to visualize MTU bottlenecks, fragmentation, and reassembly.
               </p>
             </div>
           </motion.div>
@@ -825,7 +974,7 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
         )}
 
         {/* Info Panel - For Non-TCP/Non-Segmentation/Non-ACK/Non-FlowControl/Non-TcpVsUdp Concepts */}
-        {!isTCPConcept && !isSegmentationConcept && !isACKConcept && !isFlowControlConcept && !isTcpVsUdpConcept && (
+        {!isTCPConcept && !isSegmentationConcept && !isACKConcept && !isFlowControlConcept && !isTcpVsUdpConcept && !isIPFragmentationConcept && (
           <motion.div
             className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-8 z-10 pointer-events-none"
             initial={{ opacity: 0, y: 20 }}

@@ -1,6 +1,8 @@
 import React from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
+import IPv4HeaderStage from './IPv4HeaderStage'
+import IPFragmentationStage from './IPFragmentationStage'
 
 /**
  * Network Layer Visualization - Per-Concept Models
@@ -329,8 +331,19 @@ function PacketDropViz() {
   )
 }
 
-export default function NetworkLayerViz({ conceptId = 'net-ip-addr' }) {
+export default function NetworkLayerViz({ conceptId = 'net-ip-addr', ipFragIsAttempting = false, ipFragDFEnabled = false, ipFragOutOfOrder = false, ipFragShowICMPError = false }) {
   switch (conceptId) {
+    case 'net-ipv4-header':
+      return <IPv4HeaderStage />
+    case 'net-ip-fragmentation':
+      return (
+        <IPFragmentationStage
+          isAttempting={ipFragIsAttempting}
+          isDFEnabled={ipFragDFEnabled}
+          isOutOfOrder={ipFragOutOfOrder}
+          showICMPError={ipFragShowICMPError}
+        />
+      )
     case 'net-ip-addr':
       return <IPAddressingViz />
     case 'net-subnetting':

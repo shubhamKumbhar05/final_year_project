@@ -13,6 +13,13 @@ export const conceptMapping = {
     layer: 'Application',
     icon: '🌐'
   },
+  'app-https': {
+    name: 'HTTPS Protocol',
+    fullName: 'HTTP Secure (TLS/SSL)',
+    color: '#0ea5e9',
+    layer: 'Application',
+    icon: '🔒'
+  },
   'app-dns': {
     name: 'DNS',
     fullName: 'Domain Name System',
@@ -27,12 +34,12 @@ export const conceptMapping = {
     layer: 'Application',
     icon: '📁'
   },
-  'app-data-gen': {
-    name: 'Data Generator',
-    fullName: 'Application Data Generation',
-    color: '#a7f3d0',
+  'app-telnet': {
+    name: 'Telnet',
+    fullName: 'Telecommunications Network Protocol',
+    color: '#38bdf8',
     layer: 'Application',
-    icon: '💾'
+    icon: '🖥️'
   },
 
   // Transport Layer (6 concepts)

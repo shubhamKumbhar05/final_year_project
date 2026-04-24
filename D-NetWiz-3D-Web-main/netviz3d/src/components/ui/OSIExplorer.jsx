@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 /* eslint-enable no-unused-vars */
 import { OSI_LAYERS, getLayerById } from '../../data/osiLayers'
@@ -15,9 +15,13 @@ import ConceptButton from './ConceptButton'
  * - onBack: Callback to return to menu
  * - onView3D: Callback to navigate to 3D visualization (receives conceptId)
  */
-export default function OSIExplorer({ selectedLayer: initialLayer, onBack, onView3D }) {
-  const [selectedLayer, setSelectedLayer] = useState(initialLayer || 'network')
+export default function OSIExplorer({ selectedLayer: initialLayer, onLayerChange, onBack, onView3D }) {
+  const selectedLayer = initialLayer || 'network'
   const [selectedConcept, setSelectedConcept] = useState(null)
+
+  useEffect(() => {
+    setSelectedConcept(null)
+  }, [selectedLayer])
 
   const colorMap = {
     application: { text: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30', hover: 'hover:bg-green-500/20' },
@@ -60,7 +64,7 @@ export default function OSIExplorer({ selectedLayer: initialLayer, onBack, onVie
               <motion.button
                 key={layer.id}
                 onClick={() => {
-                  setSelectedLayer(layer.id)
+                  if (onLayerChange) onLayerChange(layer.id)
                   setSelectedConcept(null)
                 }}
                 whileHover={{ scale: 1.02, x: 5 }}

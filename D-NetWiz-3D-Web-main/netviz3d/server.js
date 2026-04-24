@@ -3,7 +3,6 @@
  * Avoids CORS issues by proxying requests through your own server
  * 
  * Usage: node server.js
- * Then update convaiService.js to call http://localhost:3001/api/convai
  */
 
 import express from 'express'
@@ -13,8 +12,8 @@ const app = express()
 const PORT = 3001
 
 const CONVAI_API_BASE = 'https://api.convai.com'
-const CHARACTER_ID = '227fad3a-2743-11f1-8306-42010a7be02c'
-const API_KEY = '00bbb6212a694f3132dea85bff6ab8c1'
+const CHARACTER_ID = process.env.CONVAI_CHARACTER_ID
+const API_KEY = process.env.CONVAI_API_KEY
 const CONVAI_TIMEOUT_MS = 20000
 
 // Middleware
@@ -89,6 +88,13 @@ app.post('/api/convai/init', async (req, res) => {
  */
 app.post('/api/convai/chat', async (req, res) => {
   try {
+    if (!CHARACTER_ID || !API_KEY) {
+      return res.status(500).json({
+        error: 'Server not configured',
+        details: 'Missing CONVAI_CHARACTER_ID or CONVAI_API_KEY',
+      })
+    }
+
     const { userMessage, sessionId } = req.body
 
     if (!userMessage) {

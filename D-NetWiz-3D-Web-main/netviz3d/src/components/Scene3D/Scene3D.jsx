@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 /* eslint-enable no-unused-vars */
 import ConceptVisualizations from './ConceptVisualizations'
 import CwndWindowPanel from './CwndWindowPanel'
+import IPAddressingControlPanel from './IPAddressingControlPanel'
+import { HTTPControlPanelContainer, HTTPProvider } from './visualizations/HTTPViz'
+import { HTTPSControlPanelContainer, HTTPSProvider } from './visualizations/HTTPSViz'
 import { getConceptInfo } from '../../data/conceptNames'
 
 /**
@@ -53,14 +56,27 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
     maxCwnd: 25,
     stateColor: '#9ca3af',
   })
+
+  // Network ID, Host ID visualization state
+  const [networkHostIdIpAddress, setNetworkHostIdIpAddress] = useState('192.168.1.10')
+  const [networkHostIdSubnetMask, setNetworkHostIdSubnetMask] = useState('255.255.255.0')
+  const [networkHostIdShowNetworkTrigger, setNetworkHostIdShowNetworkTrigger] = useState(0)
+  const [networkHostIdSendSameTrigger, setNetworkHostIdSendSameTrigger] = useState(0)
+  const [networkHostIdSendDiffTrigger, setNetworkHostIdSendDiffTrigger] = useState(0)
+  const [networkHostIdResetTrigger, setNetworkHostIdResetTrigger] = useState(0)
+  const [networkHostIdIsAnimating, setNetworkHostIdIsAnimating] = useState(false)
+
   const isTCPConcept = selectedConceptId === 'trans-tcp-conn'
   const isSegmentationConcept = selectedConceptId === 'trans-segmentation'
   const isACKConcept = selectedConceptId === 'trans-ack'
   const isFlowControlConcept = selectedConceptId === 'trans-flow-ctrl'
   const isMultiplexingConcept = selectedConceptId === 'trans-retrans'
   const isTcpVsUdpConcept = selectedConceptId === 'trans-tcp-vs-udp'
+  const isHTTPConcept = selectedConceptId === 'app-http'
+  const isHTTPSConcept = selectedConceptId === 'app-https'
   const orbitControlsRef = useRef(null)
   const isCongestionControlConcept = selectedConceptId === 'trans-congestion-ctrl'
+  const isNetworkHostIdConcept = selectedConceptId === 'net-network-host-id'
   const congestionCtrlPanelRef = useRef(null)
 
   const handleTriggerScenario = (scenario) => {
@@ -125,6 +141,33 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
       setCongestionCtrlNetworkCongestionTrigger(prev => prev + 1)
       setCongestionCtrlUiMessage('🚨 Network Congestion Triggered - Packet Loss Condition Active!')
     }
+  }
+
+  // Network Host ID handlers
+  const handleNetworkHostIdIpChange = (newIp) => {
+    setNetworkHostIdIpAddress(newIp)
+  }
+
+  const handleNetworkHostIdMaskChange = (newMask) => {
+    setNetworkHostIdSubnetMask(newMask)
+  }
+
+  const handleNetworkHostIdShowNetwork = () => {
+    setNetworkHostIdShowNetworkTrigger(prev => prev + 1)
+  }
+
+  const handleNetworkHostIdSendSameNetwork = () => {
+    setNetworkHostIdSendSameTrigger(prev => prev + 1)
+  }
+
+  const handleNetworkHostIdSendDiffNetwork = () => {
+    setNetworkHostIdSendDiffTrigger(prev => prev + 1)
+  }
+
+  const handleNetworkHostIdReset = () => {
+    setNetworkHostIdResetTrigger(prev => prev + 1)
+    setNetworkHostIdIpAddress('192.168.1.10')
+    setNetworkHostIdSubnetMask('255.255.255.0')
   }
 
   const handleSegmentationPhase = (phase) => {
@@ -283,7 +326,8 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
     }
   }, [isCongestionControlConcept, congestionCtrlUiMessage])
 
-  return (
+  // Render function for the main scene content
+  const renderScene = () => (
     <AnimatePresence>
       <motion.div
         className="fixed inset-0 w-full h-screen bg-slate-950 z-50"
@@ -360,6 +404,13 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
                   congestionCtrlResetTrigger={isCongestionControlConcept ? congestionCtrlResetTrigger : undefined}
                   onCongestionCtrlStateUpdate={isCongestionControlConcept ? setCongestionCtrlMetrics : undefined}
                   congestionCtrlNetworkCongestionTrigger={isCongestionControlConcept ? congestionCtrlNetworkCongestionTrigger : undefined}
+                  networkHostIdIpAddress={isNetworkHostIdConcept ? networkHostIdIpAddress : undefined}
+                  networkHostIdSubnetMask={isNetworkHostIdConcept ? networkHostIdSubnetMask : undefined}
+                  networkHostIdShowNetworkTrigger={isNetworkHostIdConcept ? networkHostIdShowNetworkTrigger : undefined}
+                  networkHostIdSendSameTrigger={isNetworkHostIdConcept ? networkHostIdSendSameTrigger : undefined}
+                  networkHostIdSendDiffTrigger={isNetworkHostIdConcept ? networkHostIdSendDiffTrigger : undefined}
+                  networkHostIdResetTrigger={isNetworkHostIdConcept ? networkHostIdResetTrigger : undefined}
+                  onNetworkHostIdAnimatingChange={isNetworkHostIdConcept ? setNetworkHostIdIsAnimating : undefined}
                 />
               </Suspense>
             </Canvas>
@@ -375,6 +426,31 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
             stateColor={congestionCtrlMetrics.stateColor}
             bottomOffset={congestionCtrlPanelHeight + 24}
           />
+        )}
+
+        {/* IP Addressing Control Panel - For Network Host ID Concept */}
+        {isNetworkHostIdConcept && (
+          <IPAddressingControlPanel
+            ipAddress={networkHostIdIpAddress}
+            subnetMask={networkHostIdSubnetMask}
+            isAnimating={networkHostIdIsAnimating}
+            onIpChange={handleNetworkHostIdIpChange}
+            onMaskChange={handleNetworkHostIdMaskChange}
+            onShowNetwork={handleNetworkHostIdShowNetwork}
+            onSendToSameNetwork={handleNetworkHostIdSendSameNetwork}
+            onSendToDifferentNetwork={handleNetworkHostIdSendDiffNetwork}
+            onReset={handleNetworkHostIdReset}
+          />
+        )}
+
+        {/* HTTP Control Panel - For HTTP Concept */}
+        {isHTTPConcept && (
+          <HTTPControlPanelContainer />
+        )}
+
+        {/* HTTPS Control Panel - For HTTPS Concept */}
+        {isHTTPSConcept && (
+          <HTTPSControlPanelContainer />
         )}
 
         {/* UI Overlay */}
@@ -2035,4 +2111,21 @@ export default function Scene3D({ selectedConceptId, selectedLayerId, onBack }) 
       </motion.div>
     </AnimatePresence>
   )
+
+  // Return with provider wrapper for HTTP/HTTPS concepts
+  if (isHTTPConcept) {
+    return (
+      <HTTPProvider>
+        {renderScene()}
+      </HTTPProvider>
+    )
+  }
+  if (isHTTPSConcept) {
+    return (
+      <HTTPSProvider>
+        {renderScene()}
+      </HTTPSProvider>
+    )
+  }
+  return renderScene()
 }

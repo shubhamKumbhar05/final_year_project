@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { useRef, useState } from 'react'
 import IPv4HeaderStage from './IPv4HeaderStage'
 import IPFragmentationStage from './IPFragmentationStage'
+import IPAddressingStage from './IPAddressingStage'
 
 /**
  * Network Layer Visualization - Per-Concept Models
@@ -332,7 +333,7 @@ function PacketDropViz() {
   )
 }
 
-export default function NetworkLayerViz({ conceptId = 'net-ipv4-header', ipFragIsAttempting = false, ipFragDFEnabled = false, ipFragOutOfOrder = false, ipFragShowICMPError = false, isFragmentationAttempting = false, isDFEnabled = false, isFragmentationOutOfOrder = false, showICMPError = false }) {
+export default function NetworkLayerViz({ conceptId = 'net-ipv4-header', ipFragIsAttempting = false, ipFragDFEnabled = false, ipFragOutOfOrder = false, ipFragShowICMPError = false, isFragmentationAttempting = false, isDFEnabled = false, isFragmentationOutOfOrder = false, showICMPError = false, networkHostIdIpAddress = '192.168.1.10', networkHostIdSubnetMask = '255.255.255.0', networkHostIdShowNetworkTrigger = 0, networkHostIdSendSameTrigger = 0, networkHostIdSendDiffTrigger = 0, networkHostIdResetTrigger = 0, onNetworkHostIdAnimatingChange }) {
   const _fragAttempting = ipFragIsAttempting || isFragmentationAttempting
   const _fragDFEnabled = ipFragDFEnabled || isDFEnabled
   const _fragOutOfOrder = ipFragOutOfOrder || isFragmentationOutOfOrder
@@ -342,7 +343,17 @@ export default function NetworkLayerViz({ conceptId = 'net-ipv4-header', ipFragI
     case 'net-ipv4-header':
       return <IPv4HeaderStage />
     case 'net-network-host-id':
-      return <IPAddressingViz />
+      return (
+        <IPAddressingStage
+          ipAddress={networkHostIdIpAddress}
+          subnetMask={networkHostIdSubnetMask}
+          showNetworkTrigger={networkHostIdShowNetworkTrigger}
+          sendPacketSameNetworkTrigger={networkHostIdSendSameTrigger}
+          sendPacketDiffNetworkTrigger={networkHostIdSendDiffTrigger}
+          resetTrigger={networkHostIdResetTrigger}
+          onAnimatingChange={onNetworkHostIdAnimatingChange}
+        />
+      )
     case 'net-classful-addressing':
       return <PathSelectionViz />
     case 'net-subnetting':

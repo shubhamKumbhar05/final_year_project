@@ -54,7 +54,7 @@ export default function App() {
       <AnimatePresence mode="wait">
         {view3D && (
           <Scene3D
-            key="scene3d"
+            key={`${selectedLayer || 'menu'}:${selectedConceptId || 'none'}`}
             selectedConceptId={selectedConceptId}
             selectedLayerId={selectedLayer}
             onBack={handleBack3D}
@@ -74,8 +74,9 @@ export default function App() {
             ) : (
               // Show Explorer when layer is selected
               <OSIExplorer
-                key="explorer"
+                key={selectedLayer || 'explorer'}
                 selectedLayer={selectedLayer}
+                onLayerChange={handleLayerSelect}
                 onBack={handleBackToMenu}
                 onView3D={handleView3D}
               />
